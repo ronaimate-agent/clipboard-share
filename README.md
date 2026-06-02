@@ -16,26 +16,26 @@ A simple web app for sharing clipboard content across devices on a local network
 ### Docker Compose
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
 The app will be available at `http://localhost:80`.
 
 ### Development
 
-Run the backend locally:
+Run locally:
 
 ```bash
 pip install -r requirements.txt
 DB_PATH=./clipboard.db python main.py
 ```
 
-The API will be available at `http://localhost:3000`.
+The app will be available at `http://localhost:80`.
 
 ## Architecture
 
-- **Backend**: FastAPI (Python) serving a REST API on port 3000
-- **Frontend**: Vanilla HTML/CSS/JS served by Nginx on port 80
+- **Backend**: FastAPI (Python) serving both the REST API and the static frontend on port 80
+- **Frontend**: Vanilla HTML/CSS/JS served as static files by FastAPI
 - **Storage**: SQLite database persisted via Docker volume
 
 ## API Endpoints
@@ -52,16 +52,14 @@ The API will be available at `http://localhost:3000`.
 
 Use the included `docker-compose.yml` as a Portainer stack. The stack creates:
 
-- `backend` service - FastAPI API server
-- `frontend` service - Nginx serving the UI
+- `app` service - FastAPI server (API + frontend)
 - `clipboard-data` volume - persistent SQLite storage
 
 ### GitHub Container Registry
 
-Images are automatically built and pushed to GHCR on every push to `main`:
+The image is automatically built and pushed to GHCR on every push to `main`:
 
-- Backend: `ghcr.io/<owner>/clipboard-share/backend`
-- Frontend: `ghcr.io/<owner>/clipboard-share/frontend`
+- `ghcr.io/<owner>/clipboard-share`
 
 ## License
 

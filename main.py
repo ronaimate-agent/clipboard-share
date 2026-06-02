@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 app = FastAPI(title="Clipboard Share")
@@ -88,6 +89,9 @@ def delete_snippet(snippet_id: int):
             raise HTTPException(status_code=404, detail="Snippet not found")
 
 
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=3000)
+    uvicorn.run(app, host="0.0.0.0", port=80)
