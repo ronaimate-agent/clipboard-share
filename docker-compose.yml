@@ -2,9 +2,7 @@ version: "3.8"
 
 services:
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/ronaimate-agent/clipboard-share/backend:latest
     container_name: clipboard-share-backend
     restart: unless-stopped
     volumes:
@@ -15,9 +13,7 @@ services:
       - DB_PATH=/data/clipboard.db
 
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
+    image: ghcr.io/ronaimate-agent/clipboard-share/frontend:latest
     container_name: clipboard-share-frontend
     restart: unless-stopped
     ports:
