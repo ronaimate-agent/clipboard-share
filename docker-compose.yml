@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clipboard-share-backend
+    restart: unless-stopped
+    volumes:
+      - clipboard-data:/data
+    expose:
+      - "3000"
+    environment:
+      - DB_PATH=/data/clipboard.db
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: clipboard-share-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  clipboard-data:

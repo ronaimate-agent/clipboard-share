@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clipboard Share</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .input-section {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #4a90d9;
+            box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        button {
+            padding: 0.6rem 1.25rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background: #4a90d9;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #357abd;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: #fff;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .snippets-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .snippet {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .snippet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .snippet-time {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .snippet-content {
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            background: #fafafa;
+            padding: 0.75rem;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 3rem 0;
+        }
+
+        .status {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Clipboard Share</h1>
+
+    <div class="input-section">
+        <textarea id="snippetInput" placeholder="Paste or type your text here..."></textarea>
+        <div class="btn-row">
+            <button class="btn-primary" onclick="addSnippet()">Share</button>
+            <button class="btn-secondary" onclick="loadSnippets()">Refresh</button>
+        </div>
+    </div>
+
+    <div id="snippetsList" class="snippets-list"></div>
+    <div id="status" class="status"></div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        async function loadSnippets() {
+            try {
+                const res = await fetch(`${API_BASE}/api/snippets`);
+                const snippets = await res.json();
+                renderSnippets(snippets);
+                updateStatus(`Loaded ${snippets.length} snippet(s)`);
+            } catch (err) {
+                updateStatus("Failed to load snippets");
+            }
+        }
+
+        function renderSnippets(snippets) {
+            const container = document.getElementById("snippetsList");
+            if (snippets.length === 0) {
+                container.innerHTML = '<div class="empty-state">No snippets yet. Share something!</div>';
+                return;
+            }
+            container.innerHTML = snippets.map(s => `
+                <div class="snippet">
+                    <div class="snippet-header">
+                        <span class="snippet-time">${formatTime(s.created_at)}</span>
+                        <button class="btn-danger" onclick="deleteSnippet(${s.id})">Delete</button>
+                    </div>
+                    <div class="snippet-content">${escapeHtml(s.content)}</div>
+                </div>
+            `).join("");
+        }
+
+        async function addSnippet() {
+            const input = document.getElementById("snippetInput");
+            const content = input.value.trim();
+            if (!content) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/snippets`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ content }),
+                });
+                if (res.ok) {
+                    input.value = "";
+                    loadSnippets();
+                } else {
+                    updateStatus("Failed to add snippet");
+                }
+            } catch (err) {
+                updateStatus("Failed to add snippet");
+            }
+        }
+
+        async function deleteSnippet(id) {
+            try {
+                const res = await fetch(`${API_BASE}/api/snippets/${id}`, {
+                    method: "DELETE",
+                });
+                if (res.ok) {
+                    loadSnippets();
+                } else {
+                    updateStatus("Failed to delete snippet");
+                }
+            } catch (err) {
+                updateStatus("Failed to delete snippet");
+            }
+        }
+
+        function formatTime(iso) {
+            const d = new Date(iso);
+            return d.toLocaleString();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateStatus(msg) {
+            document.getElementById("status").textContent = msg;
+        }
+
+        loadSnippets();
+        setInterval(loadSnippets, 10000);
+    </script>
+</body>
+</html>
