@@ -11,6 +11,12 @@ services:
       - clipboard-data:/data
     environment:
       - DB_PATH=/data/clipboard.db
+    networks:
+      - proxy-net
 
 volumes:
   clipboard-data:
+
+networks:
+  proxy-net:
+    external: true
