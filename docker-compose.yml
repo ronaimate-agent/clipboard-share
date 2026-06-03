@@ -5,12 +5,12 @@ services:
     image: ghcr.io/ronaimate-agent/clipboard-share:latest
     container_name: clipboard-share
     restart: unless-stopped
-    ports:
-      - "80:80"
+    expose:
+      - "80"
     volumes:
       - clipboard-data:/data
     environment:
-      - DB_PATH=/data/clipboard.db
+      - DB_PATH=${DB_PATH:-/data/clipboard.db}
     networks:
       - proxy-net
 
